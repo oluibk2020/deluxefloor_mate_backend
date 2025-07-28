@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category{
+  id Int @id @default(autoincrement())
+  title String
+  description String ?
+
+  //product to categories
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product{
+  id Int @id @default(autoincrement())
+  title String
+  price Decimal
+  imageUrl String
+  description String
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  categoryId Int
+  quantity Int @default(1)
+
+  //product to category
+  category Category @relation(fields: [categoryId], references: [id])
+  cart Cart[]
+
+  
+
+ 
+
+  @@map("products")
+}
+
+model User{
+  id Int @id @default(autoincrement())
+  isAdmin Boolean @default(false)
+  isManager Boolean @default(false)
+  email String @unique
+  password String
+  mobile String
+  firstName String
+  lastName String
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+//user to deliveryAd
+  deliveryaddress DeliveryAddress[]
+
+  //user to cart
+  cart Cart[]
+
+//user to order
+orders Order[]
+
+ // Relation to the PasswordResetToken model
+userTokens UserToken[]
+
+  @@map("users")
+}
+
+model UserToken {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  userId    Int
+  createdAt DateTime  @default(now())
+  expiresAt  DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  // Relation to the User model
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model DeliveryAddress{
+  id Int @id @default(autoincrement())
+  address String
+  mobile String
+  firstName String
+  lastName String
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  userId Int
+  
+  //user to deliveryAd
+  user User @relation(fields: [userId], references: [id])
+
+  //order to delivery address
+  orders Order[]
+  
+
+  @@map("deliveryaddresses")
+}
+
+model Cart{
+  id Int @id @default(autoincrement())
+  productId Int
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  userId Int
+
+  //product to cart
+product Product @relation(fields: [productId], references: [id])
+
+user User @relation(fields: [userId], references: [id])
+
+@@map("cart")
+}
+
+model OrderItem{
+  id Int @id @default(autoincrement())
+  productId Int
+  quantity  Int
+  price Int
+  orderId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+
+  //one to many
+  order Order @relation(fields: [orderId], references: [id])
+  
+
+  @@map("orders")
+}
+
+enum PaymentMethod {
+  flutterwave
+  paystack
+  cash
+}
+
+enum TransactionStatus {
+  failed
+  success
+  pending
+}
+
+
+
+model Order{
+   id Int @id @default(autoincrement())
+   totalAmount Int
+   paymentMethod PaymentMethod @default(flutterwave) 
+   transactionStatus TransactionStatus @default(pending)
+   createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+
+  //user to order(one to many)
+   user User @relation(fields: [userId], references: [id])
+   userId Int
+
+   //order to delivery address (one to many)
+   deliveryAddressId Int
+   deliveryAddress DeliveryAddress @relation(fields: [deliveryAddressId], references: [id])
+
+   //order to orderItems(one to many)
+  orderItems OrderItem []
+
+  @@map("orderitems")
+}
