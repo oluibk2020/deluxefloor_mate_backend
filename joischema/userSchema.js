@@ -4,7 +4,7 @@ const joiPwd = require("joi-password-complexity");
 //user schema
 const userSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
+  password: Joi.string().min(5).max(30).required(),
   firstName: Joi.string().min(3).max(100),
   lastName: Joi.string().min(3).max(100),
   mobile: Joi.string().min(3).max(20),
@@ -14,7 +14,7 @@ const userSchema = Joi.object({
 //user schema
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().min(10).max(30).required(),
+  password: Joi.string().min(5).max(30).required(),
 
 });
 
@@ -37,6 +37,11 @@ const resetPasswordSchema = Joi.object({
 //get email
 const emailSchema = Joi.object({
   email: Joi.string().email().required()
+});
+//get email
+const roleSchema = Joi.object({
+  email: Joi.string().email().required(),
+  managerRoleStatus: Joi.boolean().required(),
 });
 
 //email schema
@@ -61,6 +66,7 @@ const complexityOptions = {
 };
 
 module.exports.userVal = userSchema;
+module.exports.roleVal = roleSchema
 module.exports.loginVal = loginSchema;
 module.exports.deliveryVal = deliverySchema
 module.exports.pwdVal = joiPwd(complexityOptions);

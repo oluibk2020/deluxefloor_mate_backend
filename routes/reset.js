@@ -94,12 +94,14 @@ router.post("/password", limiter, async (req, res, next) => {
     return res.status(400).json(valResult.error.details);
   }
 
+  const { token, newPassword, email } = req.body;
+
   //validate user password inputs
   const pwdResult = userPwdSchema.pwdVal.validate(newPassword);
+  
   if (pwdResult.error) {
     return res.status(400).json(pwdResult.error.details);
   }
-  const { token, newPassword, email } = req.body;
 
     const resetToken = await prisma.userToken.findFirst({
       where: {

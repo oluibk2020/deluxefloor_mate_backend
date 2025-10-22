@@ -57,15 +57,18 @@ app.use("/payment", payment);
 app.use("/token", token);
 app.use("/reset", reset);
 
+//handle 404 - endpoint not found
+app.use((req, res) => {
+  res.status(404).json({ msg: "Endpoint Not Found. Please check the URL or HTTP Method" , status: "error"});
+})
+
 //error handler
 app.use(error);
 
 //env tutorial
 console.log("NODE_ENV = ", process.env.NODE_ENV);
 console.log("app.get() = ", app.get("env"));
-console.log("App Secret = ", config.get("jwtSecret"));
-console.log("Flutter secret key = ", config.get("flutterwaveAPIkey"));
-console.log("flutter pub key = ", config.get("flutterwavePublicAPIkey"));
+
 app.listen(port, () =>
   console.log(`DeluxeStore App listening on port ${port}!`)
 );
