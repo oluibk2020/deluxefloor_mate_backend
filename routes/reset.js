@@ -22,23 +22,24 @@ const limiter = rateLimit({
 
 //reset password request
 router.put("/password-request", limiter, async (req, res, next) => {
-  const { email } = req.body;
   // Create random number without leading zeros
   // Create random number without leading zeros
-      const sixDigit = crypto.randomBytes(2).readUInt16BE(0) % 90000 + 100000;
+  try {
+  const sixDigit = crypto.randomBytes(2).readUInt16BE(0) % 90000 + 100000;
   const expiresAt = new Date();
   expiresAt.setMinutes(expiresAt.getMinutes() + 5); // 5 minutes from now
+  
+  // user validation of inputs using Joi
 
-  //user validation of inputs using Joi
   const valResult = emailSchema.emailVal.validate(req.body, {
     abortEarly: false,
   });
-
+  
   if (valResult.error) {
     return res.status(400).json({ msg: valResult.error.details });
   }
-
-  try {
+  
+  const { email } = req.body;
     const user = await prisma.user.findFirst({
       where: {
         email,
@@ -82,12 +83,13 @@ router.put("/password-request", limiter, async (req, res, next) => {
 
 //route to reset password using the token
 router.post("/password", limiter, async (req, res, next) => {
-  const { token, newPassword, email } = req.body;
-  //user validation of inputs using Joi
-  const valResult = resetPasswordSchema.resetPasswordVal.validate(req.body, {
-    abortEarly: false,
-  });
+  try {
 
+    //user validation of inputs using Joi
+    const valResult = resetPasswordSchema.resetPasswordVal.validate(req.body, {
+      abortEarly: false,
+  });
+  
   if (valResult.error) {
     return res.status(400).json(valResult.error.details);
   }
@@ -97,8 +99,8 @@ router.post("/password", limiter, async (req, res, next) => {
   if (pwdResult.error) {
     return res.status(400).json(pwdResult.error.details);
   }
+  const { token, newPassword, email } = req.body;
 
-  try {
     const resetToken = await prisma.userToken.findFirst({
       where: {
         token,
