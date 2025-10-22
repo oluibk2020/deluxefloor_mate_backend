@@ -32,10 +32,11 @@ router.post("/", authProtect, async (req, res, next) => {
           msg: `${cartItem.quantity} pieces of Product - ${product.title} is out of stock. Please try again`,
         });
       }
+
     }
 
     // Calculate total amount of products in cart
-
+   
     let totalAmount = 0;
     totalAmount = cartItems.reduce((total, cartItem) => {
       return total + cartItem.price * cartItem.quantity;
@@ -46,30 +47,38 @@ router.post("/", authProtect, async (req, res, next) => {
     }
 
 
-    //create a new order - give value to the customer
-    const newOrder = await prisma.order.create({
-      data: {
-        totalAmount,
-        user: {
-          connect: { id: parseInt(userId) },
-        },
-        deliveryAddress: {
-          connect: { id: parseInt(deliveryAddressId) },
-        },
-        transactionStatus: "pending",
-        paymentMethod: paymentMethod,
-        orderItems: {
-          create: cartItems.map((cartItem) => ({
-            productId: cartItem.id,
-            quantity: cartItem.quantity,
-            price: Number(cartItem.price),
-          })),
-        },
+//create the order data
+    const orderData = {
+      totalAmount: Number(totalAmount.toFixed(2)),
+      user: {
+        connect: { id: parseInt(userId, 10) },
       },
+      deliveryAddress: {
+        connect: { id: parseInt(deliveryAddressId, 10) },
+      },
+      transactionStatus: "pending",
+      paymentMethod,
+      orderItems: {
+        create: await Promise.all(cartItems.map(async (cartItem) => ({
+          productId: cartItem.id,
+          quantity: cartItem.quantity,
+          price: Number(cartItem.price),
+          costPrice: (await prisma.product.findUnique({
+            where: { id: cartItem.id },
+            select: { cost: true },
+          })).cost,
+        }))),
+      },
+    };
+
+    const newOrder = await prisma.order.create({
+      data: orderData,
       include: {
         orderItems: true,
       },
     });
+
+
 
     //deduct the product quantity from the database
     for (const cartItem of cartItems) {
@@ -85,19 +94,7 @@ router.post("/", authProtect, async (req, res, next) => {
       });
     }
 
-    // Clear user's cart after placing the order
-    // await prisma.cart.deleteMany({
-    //   where: {
-    //     userId,
-    //   },
-    // });
-
-    //send a mail for a new order
-    // mailer(
-    //   `${req.user.firstName} ${req.user.firstName}`,
-    //   req.user.email,
-    //   newOrder.id
-    // );
+   
 
     //send email for success
     await sendMail.mailHandler(
@@ -178,6 +175,7 @@ router.get("/:id", authProtect, async (req, res, next) => {
               lastName: true,
               email: true,
               mobile: true,
+              isManager: true 
             },
           },
         },
@@ -247,7 +245,8 @@ router.put("/update/:id", [authProtect], async (req, res, next) => {
       return res.status(400).json({ msg: valResult.error.details });
     }
     const { id } = req.params;
-    const { otp,  transactionStatus } = req.body;
+    const { otp, transactionStatus, discountAmount, discountPaymentStatus } =
+      req.body;
 
     //find the order
     const order = await prisma.order.findFirst({
@@ -311,6 +310,8 @@ router.put("/update/:id", [authProtect], async (req, res, next) => {
       },
       data: {
         transactionStatus: transactionStatus,
+        discountAmount: Number(discountAmount),
+        discountPaymentStatus: discountPaymentStatus,
       },
     });
 

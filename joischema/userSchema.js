@@ -35,7 +35,11 @@ const emailSchema = Joi.object({
 //email schema
 const otpSchema = Joi.object({
   otp: Joi.number().min(100000).max(999999).required(),
-  transactionStatus: Joi.string().valid("success", "failed", "pending").required()
+  transactionStatus: Joi.string()
+    .valid("success", "failed", "pending")
+    .required(),
+  discountAmount: Joi.number().min(0),
+  discountPaymentStatus: Joi.string().valid("success", "pending", "failed"),
 });
 
 //password complexity

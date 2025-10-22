@@ -12,10 +12,10 @@ const adminProtect = require("../middleware/authAdmin");
 
 //to create a product
 router.post("/create", [authProtect, adminProtect], async (req, res, next) => {
-  const { title, description, price, imageUrl, categoryId, quantity } = req.body;
+  const { title, description, price, imageUrl, categoryId, quantity, cost, featured } = req.body;
 
   //make sure all fields are provided
-  if (!title || !description || !price || !imageUrl || !categoryId || !quantity) {
+  if (!title || !description || !price || !imageUrl || !categoryId || !quantity || !cost || featured===undefined) {
     return res.status(400).json({
       msg: "All fields are required",
     });
@@ -31,7 +31,9 @@ router.post("/create", [authProtect, adminProtect], async (req, res, next) => {
         price: Number(convertedPrice.toFixed(2)),
         imageUrl,
         categoryId,
-        quantity: Number(quantity)
+        quantity: Number(quantity),
+        cost: Number(parseFloat(cost).toFixed(2)),
+        featured: Boolean(featured)
       },
     });
 
@@ -49,16 +51,16 @@ router.post("/create", [authProtect, adminProtect], async (req, res, next) => {
 
 //to edit a product
 router.put("/update/:id",[authProtect, adminProtect], async (req, res, next) => {
-  const { title, description, price,  categoryId, quantity } = req.body;
+  const { title, description, price,  quantity, cost } = req.body;
   const theId = Number(req.params.id);
   try {
     const aproduct = await prisma.product.update({
       data: {
         title: title.trim().toLowerCase(),
         description: description.trim().toLowerCase(),
-        price: price.toFixed(2),
-        categoryId,
-        quantity: Number(quantity)
+        price: Number(parseFloat(price).toFixed(2)),
+        quantity: Number(quantity),
+        cost: Number(parseFloat(cost).toFixed(2))
       },
       where: {
         id: theId,
@@ -142,6 +144,35 @@ router.get("/s", async (req, res, next) => {
 });
 
 //get all products
+router.get("/featured", async (req, res, next) => {
+  try {
+    const products = await prisma.product.findMany({
+     select:{
+      id: true,
+      title: true,
+      price: true,
+      imageUrl: true,
+      description: true,
+      quantity: true,
+      featured: true,
+     },
+     where:{
+      featured: true
+     }
+    });
+
+    if (!products) {
+      return res.status(404).json({
+        msg: "No data found. Something went wrong",
+      });
+    }
+
+   return res.status(200).json(products);
+  } catch (error) {
+    next(error)
+  }
+});
+//get all products
 router.get("/", async (req, res, next) => {
   try {
     const products = await prisma.product.findMany({
@@ -151,7 +182,8 @@ router.get("/", async (req, res, next) => {
       price: true,
       imageUrl: true,
       description: true,
-      quantity: true
+      quantity: true,
+      cost: true
      }
     });
 
@@ -182,7 +214,8 @@ router.get("/:id", async (req, res, next) => {
           price: true,
           imageUrl: true,
           description: true,
-          quantity: true
+          quantity: true,
+          cost: true
         },
       });
 

@@ -41,7 +41,6 @@ router.post("/", async (req, res, next) => {
       isAdmin: user.isAdmin,
       isManager: user.isManager
     };
-console.log(payload);
     const jwtOption = { expiresIn: 36000 };
     const token =  jwt.sign(payload, config.get("jwtSecret"), jwtOption);
     return res.status(200).json({

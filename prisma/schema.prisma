@@ -24,22 +24,22 @@ model Category{
 model Product{
   id Int @id @default(autoincrement())
   title String
-  price Decimal
+  price Float
+  cost Float @default(0)
   imageUrl String
   description String
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
   categoryId Int
   quantity Int @default(1)
+  featured Boolean @default(false)
 
   //product to category
   category Category @relation(fields: [categoryId], references: [id])
   cart Cart[]
 
-  
-
- 
-
+  @@index([categoryId])       // 🔍 speeds up product by category lookup
+  @@index([title])            // 🔍 search products by title faster
   @@map("products")
 }
 
@@ -114,6 +114,9 @@ product Product @relation(fields: [productId], references: [id])
 
 user User @relation(fields: [userId], references: [id])
 
+@@index([userId])
+  @@index([productId])
+
 @@map("cart")
 }
 
@@ -122,6 +125,7 @@ model OrderItem{
   productId Int
   quantity  Int
   price Int
+  costPrice Int?
   orderId Int
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
@@ -130,7 +134,7 @@ model OrderItem{
   order Order @relation(fields: [orderId], references: [id])
   
 
-  @@map("orders")
+  @@map("order_items")
 }
 
 enum PaymentMethod {
@@ -144,12 +148,18 @@ enum TransactionStatus {
   success
   pending
 }
-
+enum DiscountPaymentStatus {
+  failed
+  success
+  pending
+}
 
 
 model Order{
    id Int @id @default(autoincrement())
    totalAmount Int
+   discountAmount Int ?
+   discountPaymentStatus DiscountPaymentStatus ? @default(pending)
    paymentMethod PaymentMethod @default(flutterwave) 
    transactionStatus TransactionStatus @default(pending)
    createdAt DateTime @default(now())
@@ -166,5 +176,8 @@ model Order{
    //order to orderItems(one to many)
   orderItems OrderItem []
 
-  @@map("orderitems")
+  @@index([userId])                // 🔍 get all orders by user quickly
+  @@index([transactionStatus])     // 🔍 filter orders by status quickly
+
+  @@map("orders")
 }

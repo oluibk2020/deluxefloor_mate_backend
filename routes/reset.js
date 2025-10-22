@@ -21,7 +21,7 @@ const limiter = rateLimit({
 });
 
 //reset password request
-router.post("/password-request", limiter, async (req, res, next) => {
+router.put("/password-request", limiter, async (req, res, next) => {
   const { email } = req.body;
   // Create random number without leading zeros
   // Create random number without leading zeros
