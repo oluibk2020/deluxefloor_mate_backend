@@ -11,6 +11,13 @@ const userSchema = Joi.object({
 });
 
 
+//user schema
+const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(10).max(30).required(),
+
+});
+
 //delivery schema
 const deliverySchema = Joi.object({
   address: Joi.string().min(3).max(100).required(),
@@ -54,6 +61,7 @@ const complexityOptions = {
 };
 
 module.exports.userVal = userSchema;
+module.exports.loginVal = loginSchema;
 module.exports.deliveryVal = deliverySchema
 module.exports.pwdVal = joiPwd(complexityOptions);
 module.exports.emailVal = emailSchema;
